@@ -26,10 +26,11 @@ from .utils import is_hrraa_trainable
 class HRRAAModel(nn.Module):
     """
     Implements Holographic Reduced Representation Attention Adapter
+
     This Adapter was adapted from the AdaptionPrompt code.
 
     The top L attention modules are replaced with HRRAdaptedAttention modules that wrap the original ones, but insert
-    trainable prompts with gates (for zero init).
+    trainable linear-time neuro-symbolic attention layers with gates (for zero init).
 
     Notes on the multi-adapter pattern:
     - We store the states of different adapters by keeping a dictionary of HRRAdaptedAttention modules indexed by adapter
