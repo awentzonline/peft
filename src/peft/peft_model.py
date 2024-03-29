@@ -41,6 +41,7 @@ from .config import PeftConfig
 from .tuners import (
     AdaLoraModel,
     AdaptionPromptModel,
+    HRRAAModel,
     IA3Model,
     LoHaModel,
     LoKrModel,
@@ -84,6 +85,7 @@ PEFT_TYPE_TO_MODEL_MAPPING = {
     PeftType.IA3: IA3Model,
     PeftType.OFT: OFTModel,
     PeftType.POLY: PolyModel,
+    PeftType.HRRAA: HRRAAModel,
 }
 
 
