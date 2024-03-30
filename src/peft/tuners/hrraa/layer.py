@@ -23,7 +23,10 @@ from .config import TRANSFORMERS_MODEL_CONFIG
 
 
 class HRRAdaptedAttention(nn.Module):
-    """This module wraps a LLamaAttention module and injects adaption prompts."""
+    """
+    This module adds a new, trainable attention layer that wraps an existing
+    attention layer. The attention is implemented in linear time wrt sequence length.
+    """
 
     def __init__(self, model_type: str, model):
         """
@@ -85,8 +88,12 @@ class HRRAdaptedAttention(nn.Module):
         k = self.hrraa_key(hidden_states)
         v = self.hrraa_value(hidden_states)
         q = self.hrraa_query(hidden_states)
-        values = hrr.key_value_query(k, v, q, causal=True)
-        values = values.view(bsz, q_len, embed_dim)
+        values_hat = hrr.key_value_query(k, v, q, causal=True)
+        values_hat = values_hat.view(bsz, q_len, embed_dim)
+        # trying the softmax clean-up from https://arxiv.org/pdf/2305.19534.pdf
+        values_presence = F.cosine_similarity(v, values_hat, -1)[..., None]
+        values_weight = F.softmax(values_presence, -2)
+        values = values_weight * v
 
         adapter_output = self.hrraa_adaption_gate * values
         output = output + adapter_output
