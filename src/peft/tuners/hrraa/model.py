@@ -19,7 +19,7 @@ import torch.nn as nn
 from peft.utils import _freeze_adapter, _get_submodules
 
 from .config import HRRAAConfig, prepare_config
-from .layer import HRRAdaptedAttention
+from .layer import HRRAA_ADAPTERS, HRRAdaptedAttention
 from .utils import is_hrraa_trainable
 
 
@@ -120,17 +120,17 @@ class HRRAAModel(nn.Module):
         self._remove_adapted_attentions(self._active_adapter)
 
     def _create_adapted_attentions(self, config: HRRAAConfig, parents: List[nn.Module]) -> None:
-        """Wrap LlamaAttention modules with newly created AdaptedAttention modules."""
+        """Wrap attention modules with newly created HRRAdaptedAttention modules."""
         for par in parents:
-            print('parent', par)
-            attn = HRRAdaptedAttention(
+            adapter_class = HRRAA_ADAPTERS[config.adapter_type]
+            attn = adapter_class(
                 model_type=self.model.config.model_type,
                 model=getattr(par, config.target_modules),
             )
             setattr(par, config.target_modules, attn)
 
     def _set_adapted_attentions(self, adapter_name: str) -> None:
-        """Replace LlamaAttention modules with cached AdaptedAttention modules."""
+        """Replace attention modules with cached HRRAdaptedAttention modules."""
         cached = self._cached_adapters[adapter_name]
         del self._cached_adapters[adapter_name]
         config = self.peft_config[adapter_name]
@@ -138,7 +138,7 @@ class HRRAAModel(nn.Module):
             setattr(par, config.target_modules, cached[i])
 
     def _remove_adapted_attentions(self, adapter_name: str) -> None:
-        """Remove AdaptedAttention modules from the model and store them in the cache."""
+        """Remove HRRAdaptedAttention modules from the model and store them in the cache."""
         config = self.peft_config[adapter_name]
         adapted_attentions = []
         for par in self._parents[adapter_name]:

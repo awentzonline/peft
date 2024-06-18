@@ -7,11 +7,11 @@ from torch.distributions import Normal
 
 
 def fft(x):
-    return torch.fft.fft(x, norm=None)
+    return torch.fft.rfft(x, norm='ortho')
 
 
 def ifft(x):
-    return torch.fft.ifft(x, norm=None)
+    return torch.fft.irfft(x, norm='ortho')
 
 
 def bind(a, b):
@@ -73,7 +73,7 @@ def key_value_query(
     k: torch.Tensor, v: torch.Tensor, q: torch.Tensor,
     causal: bool = True, norm: bool = False
 ):
-    k, v, inv_q = fft(k), fft(v), inverse(fft(q))
+    k, v, inv_q = fft(k), fft(v), fft(inverse(q))
     if norm:
         eps = 1e-8
         k = k / (torch.norm(k, dim=-1, keepdim=True) + eps)

@@ -27,7 +27,9 @@ class HRRAAConfig(PeftConfig):
         default=None, metadata={"help": "Name of the attention submodules to adapt."}
     )
     adapter_layers: int = field(default=None, metadata={"help": "Number of adapter layers (from the top)"})
-
+    adapter_type: str = field(
+        default='base', metadata={"help": "Variant of HRRAA (base, recast, channel)"}
+    )
     def __post_init__(self):
         self.peft_type = PeftType.HRRAA
 

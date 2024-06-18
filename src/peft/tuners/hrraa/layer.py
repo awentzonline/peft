@@ -25,7 +25,7 @@ from .config import TRANSFORMERS_MODEL_CONFIG
 class HRRAdaptedAttention(nn.Module):
     """
     This module adds a new, trainable attention layer that wraps an existing
-    attention layer. The attention is implemented in linear time wrt sequence length.
+    attention layer. The attention is based on neuro-symbolic systems and implemented in linear time wrt sequence length.
     """
 
     def __init__(self, model_type: str, model):
@@ -68,10 +68,10 @@ class HRRAdaptedAttention(nn.Module):
 
     def forward(self, *args, **kwargs):
         """
-        Forward pass for the adapter which wraps the original LlamaAttention module.
+        Forward pass for the adapter which wraps the original attention module.
 
         Args:
-            kwargs: See the original LlamaAttention module.
+            kwargs: See the original attention module.
         """
         if kwargs.get("output_attention", False):
             raise NotImplementedError("output_attention is not currently supported.")
@@ -84,20 +84,56 @@ class HRRAdaptedAttention(nn.Module):
         # apply HRRAA
         get_inputs = TRANSFORMERS_MODEL_CONFIG[self.model_type].get_inputs
         hidden_states = get_inputs(*args, **kwargs)
-        # hidden_states = kwargs.get("hidden_states")
+
         k = self.hrraa_key(hidden_states)
         v = self.hrraa_value(hidden_states)
         q = self.hrraa_query(hidden_states)
+
+        adapter_output = self.attend(q, k, v)
+
+        output = output + self.hrraa_adaption_gate * adapter_output
+        # Restore original dtype.
+        # output = output.to(previous_dtype)
+        return output, *rest_original_output
+
+    def attend(self, q, k, v):
+        bsz, q_len, embed_dim  = v.shape
         values_hat = hrr.key_value_query(k, v, q, causal=True)
-        values_hat = values_hat.view(bsz, q_len, embed_dim)
+        # trying the softmax clean-up from https://arxiv.org/pdf/2305.19534.pdf
+        # values_hat = values_hat.view(bsz, q_len, embed_dim)
+        return values_hat
+
+
+class HRRAdaptedAttentionRecastHRR(HRRAdaptedAttention):
+    """
+    HRRAA using the method from:
+    Recasting Self-Attention with Holographic Reduced Representations
+    https://arxiv.org/pdf/2305.19534.pdf
+    """
+    def attend(self, q, k, v):
+        bsz, q_len, embed_dim  = v.shape
+        values_hat = hrr.key_value_query(k, v, q, causal=True)
         # trying the softmax clean-up from https://arxiv.org/pdf/2305.19534.pdf
         values_presence = F.cosine_similarity(v, values_hat, -1)[..., None]
         values_weight = F.softmax(values_presence, -2)
         values = values_weight * v
+        return values
 
-        adapter_output = self.hrraa_adaption_gate * values
-        output = output + adapter_output
 
-        # Restore original dtype.
-        # output = output.to(previous_dtype)
-        return output, *rest_original_output
+class HRRAdaptedAttentionChannels(HRRAdaptedAttention):
+    """
+    HRRAA using the method from:
+    Recasting Self-Attention with Holographic Reduced Representations
+    https://arxiv.org/pdf/2305.19534.pdf
+    """
+    def attend(self, q, k, v):
+        bsz, q_len, embed_dim  = v.shape
+        values_hat = hrr.key_value_query(k, v, q, causal=True)
+        return values_hat
+
+
+HRRAA_ADAPTERS = dict(
+    base=HRRAdaptedAttention,
+    recast=HRRAdaptedAttentionRecastHRR,
+    channels=HRRAdaptedAttentionChannels,
+)
