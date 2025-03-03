@@ -19,7 +19,7 @@ import torch.nn as nn
 from peft.utils import _freeze_adapter, _get_submodules
 
 from .config import HRRAAConfig, prepare_config
-from .layer import HRRAA_ADAPTERS, HRRAdaptedAttention
+from .layer import HRRAA_ADAPTERS
 from .utils import is_hrraa_trainable
 
 

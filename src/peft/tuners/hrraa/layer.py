@@ -118,20 +118,7 @@ class HRRAdaptedAttentionRecastHRR(HRRAdaptedAttention):
         return values
 
 
-class HRRAdaptedAttentionChannels(HRRAdaptedAttention):
-    """
-    HRRAA using the method from:
-    Recasting Self-Attention with Holographic Reduced Representations
-    https://arxiv.org/pdf/2305.19534.pdf
-    """
-    def attend(self, q, k, v):
-        bsz, q_len, embed_dim  = v.shape
-        values_hat = hrr.key_value_query(k, v, q, causal=True)
-        return values_hat
-
-
 HRRAA_ADAPTERS = dict(
     base=HRRAdaptedAttention,
     recast=HRRAdaptedAttentionRecastHRR,
-    channels=HRRAdaptedAttentionChannels,
 )
