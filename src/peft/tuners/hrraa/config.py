@@ -31,6 +31,7 @@ class HRRAAConfig(PeftConfig):
         default='base', metadata={"help": "Variant of HRRAA (base, recast)"}
     )
     is_causal: bool = field(default=True, metadata={"help": "Is attention causal?"})
+    use_adaption_gate: bool = field(default=False, metadata={"help": "Learn gate for adapter output"})
     def __post_init__(self):
         self.peft_type = PeftType.HRRAA
 

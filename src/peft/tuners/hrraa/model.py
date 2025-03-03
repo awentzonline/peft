@@ -128,6 +128,7 @@ class HRRAAModel(nn.Module):
                 model_type=model_type,
                 model=getattr(par, config.target_modules),
                 is_causal=config.is_causal,
+                use_adaption_gate=config.use_adaption_gate,
             )
             setattr(par, config.target_modules, attn)
 

@@ -28,7 +28,7 @@ class HRRAdaptedAttention(nn.Module):
     attention layer. The attention is based on neuro-symbolic systems and implemented in linear time wrt sequence length.
     """
 
-    def __init__(self, model_type: str, model, is_causal=True):
+    def __init__(self, model_type: str, model, is_causal=True, use_adaption_gate=True):
         """
         Initialize object.
 
@@ -42,6 +42,7 @@ class HRRAdaptedAttention(nn.Module):
         self.model_type = model_type
         self.model = model
         self.is_causal = is_causal
+        self.use_adaption_gate = use_adaption_gate
         # Assume all parameters of the attention model we are wrapping are on the same device.
         device = next(model.parameters()).device
         # Don't think this was specified in the paper, but we follow the official repo which used an Embedding
@@ -102,7 +103,10 @@ class HRRAdaptedAttention(nn.Module):
 
         adapter_output = self.attend(q, k, v)
 
-        output = output + self.hrraa_adaption_gate * adapter_output
+        if self.use_adaption_gate:
+            output = output + self.hrraa_adaption_gate * adapter_output
+        else:
+            output = output + adapter_output
         # Restore original dtype.
         output = output.to(previous_dtype)
         return output, *rest_original_output
