@@ -76,6 +76,14 @@ TRANSFORMERS_MODEL_CONFIG = {
         target_modules="self_attn",
         get_inputs=get_input_default,
     ),
+    "bert": ModelTypeConfig(
+        target_modules="attention",
+        get_inputs=get_input_default,
+    ),
+    "default": ModelTypeConfig(
+        target_modules="self_attention",
+        get_inputs=get_input_bloom,
+    ),
 }
 
 

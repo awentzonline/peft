@@ -56,15 +56,22 @@ class HRRAdaptedAttention(nn.Module):
         # Initialize the gate to 0 as this is "zero-init".
         self.hrraa_adaption_gate = nn.Parameter(torch.zeros(1, device=device, dtype=target_dtype))
 
+        if hasattr(self.model, "hidden_size"):
+            hidden_size = self.model.hidden_size
+        elif hasattr(self.model, "self"):
+            hidden_size = self.model.self.all_head_size
+        else:
+            hidden_size = self.model.config.hidden_size
+
         # HRRAA
         self.hrraa_query = nn.Sequential(
-            nn.Linear(self.model.hidden_size, self.model.hidden_size),
+            nn.Linear(hidden_size, hidden_size),
         )
         self.hrraa_key = nn.Sequential(
-            nn.Linear(self.model.hidden_size, self.model.hidden_size),
+            nn.Linear(hidden_size, hidden_size),
         )
         self.hrraa_value = nn.Sequential(
-            nn.Linear(self.model.hidden_size, self.model.hidden_size),
+            nn.Linear(hidden_size, hidden_size),
         )
 
     def forward(self, *args, **kwargs):

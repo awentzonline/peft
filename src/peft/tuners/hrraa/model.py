@@ -123,8 +123,9 @@ class HRRAAModel(nn.Module):
         """Wrap attention modules with newly created HRRAdaptedAttention modules."""
         for par in parents:
             adapter_class = HRRAA_ADAPTERS[config.adapter_type]
+            model_type = self.model.config.model_type if hasattr(self.model, 'config') else 'default'
             attn = adapter_class(
-                model_type=self.model.config.model_type,
+                model_type=model_type,
                 model=getattr(par, config.target_modules),
                 is_causal=config.is_causal,
             )
