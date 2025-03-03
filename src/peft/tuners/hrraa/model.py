@@ -126,6 +126,7 @@ class HRRAAModel(nn.Module):
             attn = adapter_class(
                 model_type=self.model.config.model_type,
                 model=getattr(par, config.target_modules),
+                is_causal=config.is_causal,
             )
             setattr(par, config.target_modules, attn)
 
