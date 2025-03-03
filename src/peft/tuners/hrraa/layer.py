@@ -84,16 +84,19 @@ class HRRAdaptedAttention(nn.Module):
         # apply HRRAA
         get_inputs = TRANSFORMERS_MODEL_CONFIG[self.model_type].get_inputs
         hidden_states = get_inputs(*args, **kwargs)
-
+        previous_dtype = hidden_states.dtype
+        
         k = self.hrraa_key(hidden_states)
         v = self.hrraa_value(hidden_states)
         q = self.hrraa_query(hidden_states)
+
+        k, q, v = map(lambda x: x.to(torch.float32), (k, q, v))
 
         adapter_output = self.attend(q, k, v)
 
         output = output + self.hrraa_adaption_gate * adapter_output
         # Restore original dtype.
-        # output = output.to(previous_dtype)
+        output = output.to(previous_dtype)
         return output, *rest_original_output
 
     def attend(self, q, k, v):
