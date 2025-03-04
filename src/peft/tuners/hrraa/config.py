@@ -55,6 +55,10 @@ def get_input_bloom(*args, **kwargs):
     return args[0]
 
 
+def get_input_distilbert(*args, **kwargs):
+    return kwargs.get('query')
+
+
 # Mapping of transformers model types to their specific configuration.
 TRANSFORMERS_MODEL_CONFIG = {
     "bloom": ModelTypeConfig(
@@ -80,6 +84,10 @@ TRANSFORMERS_MODEL_CONFIG = {
     "bert": ModelTypeConfig(
         target_modules="attention",
         get_inputs=get_input_default,
+    ),
+    "distilbert": ModelTypeConfig(
+        target_modules="attention",
+        get_inputs=get_input_distilbert,
     ),
     "default": ModelTypeConfig(
         target_modules="self_attention",
